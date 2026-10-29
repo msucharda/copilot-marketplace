@@ -14,7 +14,8 @@ description: "Create or import a shared skill into copilot-marketplace, includin
    `agel-data-and-ai-temp-poc/copilot-marketplace` on a contribution branch.
    If starting in the personal assistant repository, preserve it and open or
    clone a separate marketplace checkout. Resolve any explicitly requested
-   destination using the exception rule below. Confirm branch/PR access first.
+   destination using the exception rule below. Run **Verify all destination
+   URLs** before editing, for the default target too. Confirm branch/PR access.
 3. This workshop catalog contains exactly two plugins. Put participant-authored
    skills in `marketplace-maintenance`. Keep `matt-pocock-skills` byte-identical
    to upstream. A third plugin requires a separately agreed catalog change.
@@ -43,11 +44,9 @@ The assistant repository is the **source**; the marketplace checkout is the
 Use a different destination only when all three conditions hold:
 
 1. The user explicitly names the destination as `owner/repo` in their request.
-2. The marketplace checkout's `origin`, read with
-   `git -C "<marketplace-root>" remote get-url origin`, points to that exact
-   repository. Inspect its host
-   and owner/repository for HTTPS or SSH remotes; ignore only an optional `.git`
-   suffix. An origin alone is not authorization.
+2. Every fetch and effective push URL of the marketplace checkout's `origin`
+   identifies that exact GitHub repository. Run the destination guard below;
+   an origin alone is not authorization.
 3. `<marketplace-root>/.github/plugin/marketplace.json` has
    `"name": "copilot-marketplace"`.
 
@@ -56,6 +55,50 @@ remotely. Keep the AGEL identity in the catalog, plugin manifests, and
 participant-facing documentation. State the explicit destination exception in
 the output and carry the approved target and three checks into the
 `marketplace-submit-update` handoff; its PR must disclose the exception too.
+
+### Verify all destination URLs
+
+For every destination (the AGEL default and any explicit exception), check all
+fetch URLs with `git -C "<marketplace-root>" remote get-url --all origin` and all
+effective push URLs with
+`git -C "<marketplace-root>" remote get-url --push --all origin`.
+Git must expand `insteadOf` and `pushInsteadOf`; every URL must identify the
+approved GitHub host and exact owner/repository, ignoring only an optional
+`.git` suffix. Reject a command error, empty output, or any unsupported or
+mismatched URL. Repeat immediately before each push in the same Git configuration
+context; stop on failure.
+
+Run this block with the absolute checkout path and resolved target substituted.
+Use `agel-data-and-ai-temp-poc/copilot-marketplace` unless all three exception
+conditions above hold. Keep the same environment and any Git `-c`/`--config-env`
+options for the check and push; after any configuration change, repeat the check.
+Evaluate every returned URL, not only the first or the matching subset:
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$marketplaceRoot = '<absolute-marketplace-root>'
+$approvedRepository = '<resolved-owner/repo>'
+$fetchUrls = @(git -C $marketplaceRoot remote get-url --all origin)
+if ($LASTEXITCODE -ne 0 -or $fetchUrls.Count -eq 0) {
+    throw 'Cannot determine all origin fetch destinations; stop.'
+}
+$pushUrls = @(git -C $marketplaceRoot remote get-url --push --all origin)
+if ($LASTEXITCODE -ne 0 -or $pushUrls.Count -eq 0) {
+    throw 'Cannot determine all origin push destinations; stop.'
+}
+$pattern = '^(?:https://github\.com/|ssh://git@github\.com/|git@github\.com:)(?<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?\z'
+foreach ($url in ($fetchUrls + $pushUrls)) {
+    $destination = [regex]::Match($url, $pattern)
+    if ([string]::IsNullOrWhiteSpace($url) -or -not $destination.Success -or
+        $destination.Groups['repository'].Value -cne $approvedRepository) {
+        throw 'Origin fetch/push destination is not the approved repository; stop.'
+    }
+}
+'Origin fetch and push destinations verified.'
+```
+
+This is a destination check, not authorization inferred from Git configuration.
+It does not replace the explicit user request or marketplace-name check.
 
 ## Write or import
 
@@ -131,10 +174,12 @@ the output and carry the approved target and three checks into the
    `copilot --plugin-dir "<marketplace-root>/plugins/marketplace-maintenance"`, inspect `/skills`,
    and invoke it with a representative prompt. Record skipped live checks.
 4. Hand off to `marketplace-submit-update` with the absolute assistant/source
-   and marketplace paths, destination origin, marketplace branch and pre-edit
-   `marketplaceBase`, source attribution, changed skill, version bump, and the
+   and marketplace paths, approved target and verified fetch/push destinations,
+   marketplace branch and pre-edit `marketplaceBase`, source attribution,
+   changed skill, version bump, and the
    exact validation commands with exit codes. Keep any source commit separately
-   named; do not label it as the marketplace base.
+   named; do not label it as the marketplace base. The receiving skill must
+   repeat the destination guard immediately before each push.
 
 Done when the skill and all required supporting files pass validation and the
 contribution handoff is complete. A local skill is not yet a published update.

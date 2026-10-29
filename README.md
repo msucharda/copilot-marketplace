@@ -83,7 +83,9 @@ unannounced substitute.
    the reusable skill and its supporting files. That skill hands off to
    `marketplace-create-skill`, then `marketplace-submit-update`.
 2. Resolve a separate absolute marketplace checkout and task branch. Preserve
-   changes in your assistant repository. Before the first marketplace edit,
+   changes in your assistant repository. Use the contribution skill's destination
+   guard before editing: every origin fetch and effective push URL must identify
+   the workshop repository. Before the first marketplace edit,
    record the full SHA from `git -C "<marketplace-root>" rev-parse HEAD`.
    This is the marketplace base, not the source skill's commit. Add the skill under
    `plugins/marketplace-maintenance/skills/<skill>/SKILL.md`; keep its required
@@ -114,7 +116,14 @@ unannounced substitute.
    The contribution skills include a fail-fast PowerShell block.
 
 6. Review for secrets, personal identifiers, organization-specific data, and
-   unclear redistribution rights. Commit and push your branch. Open a PR
+   unclear redistribution rights. Commit the intended changes. Immediately
+   before each push, repeat the
+   contribution skill's destination guard using the same Git configuration.
+   It checks `git -C "<marketplace-root>" remote get-url --all origin` and
+   `git -C "<marketplace-root>" remote get-url --push --all origin`, including
+   Git URL rewrites. Every URL must identify
+   `agel-data-and-ai-temp-poc/copilot-marketplace`; an error, empty output or
+   any other destination stops publication. Push your task branch and open a PR
    against `main` and fill the [PR template](.github/pull_request_template.md).
    Wait for green CI and another maintainer's review. The contribution skills
    stop at a PR; the maintainer decides whether to merge.
@@ -137,6 +146,9 @@ reserved names, sensitive-value patterns, retired repository references,
 required workshop skills, and every vendored file's SHA-256 inventory.
 Missing, extra, or changed vendored files fail validation. `npm test` exercises
 those CLI failure paths and pinned-blob vendoring with temporary repositories.
+Destination-guard regressions execute the contribution skills' PowerShell blocks
+against temporary Git remotes without network access. Windows uses its built-in
+Windows PowerShell; on other platforms these tests require PowerShell 7 (`pwsh`).
 CI runs both commands on Windows and Linux for PRs and pushes to `main`.
 With `--base <40-character-sha>`, validation also requires a version increase
 for every changed existing plugin; CI supplies the PR base or previous main SHA.

@@ -15,7 +15,8 @@ description: "Submit a copilot-marketplace contribution through a branch, versio
    absolute destination paths for edits. Repeat paths in each tool call;
    a previous `cd` or shell variable may not persist.
 2. Default to `agel-data-and-ai-temp-poc/copilot-marketplace`. Resolve an
-   explicitly requested destination using the exception rule below, then
+   explicitly requested destination using the exception rule below. Run
+   **Verify all destination URLs** before editing, for the default target too, then
    confirm the user can create a branch and PR at that resolved target.
    If access is missing, stop and ask the maintainer to grant it; do not write
    to a substitute repository or fork by default.
@@ -42,11 +43,9 @@ description: "Submit a copilot-marketplace contribution through a branch, versio
 Use a different destination only when all three conditions hold:
 
 1. The user explicitly names it as `owner/repo` in their request.
-2. The marketplace checkout's `origin`, read with
-   `git -C "<marketplace-root>" remote get-url origin`, points to that exact
-   repository. Inspect the host
-   and owner/repository in HTTPS or SSH remotes, ignoring only an optional
-   `.git` suffix. An origin alone or an inferred handoff is not authorization.
+2. Every fetch and effective push URL of the marketplace checkout's `origin`
+   identifies that exact GitHub repository. Run the destination guard below;
+   an origin alone or an inferred handoff is not authorization.
 3. `<marketplace-root>/.github/plugin/marketplace.json` has
    `"name": "copilot-marketplace"`.
 
@@ -54,6 +53,50 @@ Recheck these conditions before pushing or opening the PR. Stop on any mismatch.
 Disclose the explicit destination exception in the output and PR description.
 Preserve the AGEL catalog, plugin metadata, and participant documentation; the
 exception authorizes only this contribution's resolved remote destination.
+
+### Verify all destination URLs
+
+For every destination (the AGEL default and any explicit exception), check all
+fetch URLs with `git -C "<marketplace-root>" remote get-url --all origin` and all
+effective push URLs with
+`git -C "<marketplace-root>" remote get-url --push --all origin`.
+Git must expand `insteadOf` and `pushInsteadOf`; every URL must identify the
+approved GitHub host and exact owner/repository, ignoring only an optional
+`.git` suffix. Reject a command error, empty output, or any unsupported or
+mismatched URL. Repeat immediately before each push in the same Git configuration
+context; stop on failure.
+
+Run this block with the absolute checkout path and resolved target substituted.
+Use `agel-data-and-ai-temp-poc/copilot-marketplace` unless all three exception
+conditions above hold. Keep the same environment and any Git `-c`/`--config-env`
+options for the check and push; after any configuration change, repeat the check.
+Evaluate every returned URL, not only the first or the matching subset:
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$marketplaceRoot = '<absolute-marketplace-root>'
+$approvedRepository = '<resolved-owner/repo>'
+$fetchUrls = @(git -C $marketplaceRoot remote get-url --all origin)
+if ($LASTEXITCODE -ne 0 -or $fetchUrls.Count -eq 0) {
+    throw 'Cannot determine all origin fetch destinations; stop.'
+}
+$pushUrls = @(git -C $marketplaceRoot remote get-url --push --all origin)
+if ($LASTEXITCODE -ne 0 -or $pushUrls.Count -eq 0) {
+    throw 'Cannot determine all origin push destinations; stop.'
+}
+$pattern = '^(?:https://github\.com/|ssh://git@github\.com/|git@github\.com:)(?<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?\z'
+foreach ($url in ($fetchUrls + $pushUrls)) {
+    $destination = [regex]::Match($url, $pattern)
+    if ([string]::IsNullOrWhiteSpace($url) -or -not $destination.Success -or
+        $destination.Groups['repository'].Value -cne $approvedRepository) {
+        throw 'Origin fetch/push destination is not the approved repository; stop.'
+    }
+}
+'Origin fetch and push destinations verified.'
+```
+
+This is a destination check, not authorization inferred from Git configuration.
+It does not replace the explicit user request or marketplace-name check.
 
 ## Version and validate
 
@@ -98,8 +141,12 @@ exception authorizes only this contribution's resolved remote destination.
 
 ## Open the PR
 
-1. Commit the intended changes with an imperative message and push the task
-   branch using `git -C "<marketplace-root>" ...`, only after all checks pass.
+1. Commit the intended changes with an imperative message, only after all checks
+   pass. Immediately before each push, rerun **Verify all destination URLs**
+   in the same Git configuration context. Stop on any failure; a handoff or
+   earlier successful check is not sufficient. Then push only the task branch
+   using `git -C "<marketplace-root>" push origin <task-branch>`.
+   Repeat the target and exception checks before opening the PR too.
    Address GitHub CLI calls explicitly with `--repo <resolved-owner/repo>` and
    the approved marketplace head/base branches; do not infer them from the
    assistant working directory. Open a PR targeting `main` in that repository.
