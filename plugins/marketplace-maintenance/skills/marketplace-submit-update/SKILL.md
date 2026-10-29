@@ -7,19 +7,33 @@ description: "Submit a copilot-marketplace contribution through a branch, versio
 
 ## Establish the checkout and branch
 
-1. Default to `agel-data-and-ai-temp-poc/copilot-marketplace`. Resolve an
+1. Resolve the absolute `marketplaceRoot` from the handoff or the user's
+   approved checkout. The assistant clone is a source, not the command working
+   directory. Read the catalog, `package.json` and `package-lock.json` under
+   `marketplaceRoot`; stop if they do not identify the marketplace checkout.
+   Use `git -C "<marketplace-root>" ...` for every destination Git command and
+   absolute destination paths for edits. Repeat paths in each tool call;
+   a previous `cd` or shell variable may not persist.
+2. Default to `agel-data-and-ai-temp-poc/copilot-marketplace`. Resolve an
    explicitly requested destination using the exception rule below, then
    confirm the user can create a branch and PR at that resolved target.
    If access is missing, stop and ask the maintainer to grant it; do not write
    to a substitute repository or fork by default.
-2. Inspect the working tree and any `assistant-share` or `marketplace-create-skill`
-   handoff. Preserve uncommitted changes. Reuse an existing task branch rather
-   than switching to `main` and losing or mixing work.
-3. For a new contribution in a clean checkout, update `main` with a fast-forward
+3. Inspect the marketplace working tree and any `assistant-share` or
+   `marketplace-create-skill` handoff. Preserve uncommitted changes. Reuse its
+   task branch rather than switching to `main` and losing or mixing work.
+4. For a new contribution in a clean checkout, update `main` with a fast-forward
    pull and create `skill/marketplace-maintenance/<skill>`,
    `plugin/<plugin>`, or `chore/<description>` as appropriate.
    In an app-managed worktree, use its existing branch and app branch tools.
-4. Use `marketplace-create-skill` for a new skill. Participant-authored skills go
+5. Before the first marketplace edit, capture
+   `git -C "<marketplace-root>" rev-parse HEAD` and check its exit code. Record
+   the full SHA as `marketplaceBase`. If the preceding skill already edited the
+   marketplace, retain its explicitly recorded marketplace pre-edit base.
+   Never use the assistant/source-skill commit or replace the base with the
+   post-edit HEAD. If provenance of the base is missing or ambiguous, stop
+   and ask for it rather than guessing.
+6. Use `marketplace-create-skill` for a new skill. Participant-authored skills go
    in `marketplace-maintenance`. Use the vendoring script for changes to
    `matt-pocock-skills`; never patch its upstream files manually.
 
@@ -28,10 +42,12 @@ description: "Submit a copilot-marketplace contribution through a branch, versio
 Use a different destination only when all three conditions hold:
 
 1. The user explicitly names it as `owner/repo` in their request.
-2. The checkout's `origin` points to that exact repository. Inspect the host
+2. The marketplace checkout's `origin`, read with
+   `git -C "<marketplace-root>" remote get-url origin`, points to that exact
+   repository. Inspect the host
    and owner/repository in HTTPS or SSH remotes, ignoring only an optional
    `.git` suffix. An origin alone or an inferred handoff is not authorization.
-3. `.github/plugin/marketplace.json` in this checkout has
+3. `<marketplace-root>/.github/plugin/marketplace.json` has
    `"name": "copilot-marketplace"`.
 
 Recheck these conditions before pushing or opening the PR. Stop on any mismatch.
@@ -46,17 +62,35 @@ exception authorizes only this contribution's resolved remote destination.
    entry. Patch: corrections without a new capability. Minor: added skills or
    capabilities. Major: removed/renamed skills or incompatible behavior.
    Reuse a correct version bump already prepared by the preceding skill.
-2. From the repository root, run:
+2. Use this PowerShell block with the absolute marketplace root and its
+   recorded pre-edit base. `npm --prefix` makes the scripts run with that
+   checkout as their working directory even when the session is in the
+   assistant clone:
 
-   ```shell
-   npm ci
-   npm test
-   npm run validate
-   node scripts/validate.mjs --base <base-commit-sha>
+   ```powershell
+   $marketplaceRoot = '<absolute-marketplace-root>'
+   $marketplaceBase = '<recorded-marketplace-base-sha>'
+   git -C $marketplaceRoot cat-file -e "$marketplaceBase^{commit}"
+   if ($LASTEXITCODE -ne 0) { throw 'Base is not a marketplace commit; stop.' }
+   git -C $marketplaceRoot merge-base --is-ancestor $marketplaceBase HEAD
+   if ($LASTEXITCODE -ne 0) { throw 'Base is not in this marketplace history; stop.' }
+   npm --prefix $marketplaceRoot ci
+   if ($LASTEXITCODE -ne 0) { throw 'Marketplace npm ci failed; stop.' }
+   npm --prefix $marketplaceRoot test
+   if ($LASTEXITCODE -ne 0) { throw 'Marketplace tests failed; stop.' }
+   npm --prefix $marketplaceRoot run validate
+   if ($LASTEXITCODE -ne 0) { throw 'Marketplace validation failed; stop.' }
+   npm --prefix $marketplaceRoot run validate -- --base $marketplaceBase
+   if ($LASTEXITCODE -ne 0) { throw 'Marketplace base validation failed; stop.' }
    ```
 
+   Wait for completion and inspect every exit code. A failure ends this
+   workflow: report the exact command, path, exit code and error, preserve the
+   changes, and stop before later checks, commit, push or PR. Do not bypass
+   `npm ci` with `npm install`, create an assistant lockfile, or claim a pending
+   command passed.
 3. With the user's permission, test the affected plugin in an isolated CLI
-   session using `copilot --plugin-dir ./plugins/<plugin>`, inspect `/skills`,
+   session using `copilot --plugin-dir "<marketplace-root>/plugins/<plugin>"`, inspect `/skills`,
    and use a representative prompt. Mark unperformed live checks explicitly.
 4. Review the diff for redistribution rights, English text, concrete triggers,
    actionable instructions, secrets, and unrelated changes. Confirm catalog
@@ -65,7 +99,10 @@ exception authorizes only this contribution's resolved remote destination.
 ## Open the PR
 
 1. Commit the intended changes with an imperative message and push the task
-   branch. Open a PR targeting `main` in the same marketplace repository.
+   branch using `git -C "<marketplace-root>" ...`, only after all checks pass.
+   Address GitHub CLI calls explicitly with `--repo <resolved-owner/repo>` and
+   the approved marketplace head/base branches; do not infer them from the
+   assistant working directory. Open a PR targeting `main` in that repository.
    Fill the repository PR template; include the reason, affected skills,
    version change, exact checks, and any unverified live behavior. Disclose an
    explicit destination exception if one was used.

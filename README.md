@@ -82,8 +82,10 @@ unannounced substitute.
 1. In your personal assistant repository, invoke `assistant-share` and identify
    the reusable skill and its supporting files. That skill hands off to
    `marketplace-create-skill`, then `marketplace-submit-update`.
-2. Use a separate marketplace checkout and a task branch. Preserve changes in
-   your assistant repository. Add the shared skill under
+2. Resolve a separate absolute marketplace checkout and task branch. Preserve
+   changes in your assistant repository. Before the first marketplace edit,
+   record the full SHA from `git -C "<marketplace-root>" rev-parse HEAD`.
+   This is the marketplace base, not the source skill's commit. Add the skill under
    `plugins/marketplace-maintenance/skills/<skill>/SKILL.md`; keep its required
    supporting files and redistribution notices. The workshop keeps exactly
    two plugins; participant contributions do not modify vendored upstream files.
@@ -95,14 +97,21 @@ unannounced substitute.
    `plugins/<plugin>/.github/plugin/plugin.json` and the matching entry in
    `.github/plugin/marketplace.json`. Use patch for corrections, minor for new
    capabilities, and major for removals/renames or incompatible behavior.
-5. From the repository root, with Node.js 22+ and Git:
+5. With Node.js 22+ and Git, use the marketplace root and pre-edit base recorded
+   above. Address each command explicitly; a previous terminal `cd` may not
+   persist:
 
    ```shell
-   npm ci
-   npm test
-   npm run validate
-   node scripts/validate.mjs --base <base-commit-sha>
+   npm --prefix "<marketplace-root>" ci
+   npm --prefix "<marketplace-root>" test
+   npm --prefix "<marketplace-root>" run validate
+   npm --prefix "<marketplace-root>" run validate -- --base <marketplace-base-sha>
    ```
+
+   Run these sequentially and inspect each exit code. If any step fails,
+   preserve the changes, report the error and stop before the next step or
+   publication. Do not substitute `npm install` or create an assistant lockfile.
+   The contribution skills include a fail-fast PowerShell block.
 
 6. Review for secrets, personal identifiers, organization-specific data, and
    unclear redistribution rights. Commit and push your branch. Open a PR

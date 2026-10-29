@@ -19,15 +19,36 @@ description: "Create or import a shared skill into copilot-marketplace, includin
    skills in `marketplace-maintenance`. Keep `matt-pocock-skills` byte-identical
    to upstream. A third plugin requires a separately agreed catalog change.
 
+### Pin both checkouts before editing
+
+The assistant repository is the **source**; the marketplace checkout is the
+**destination**. Their working directories and commit SHAs are not interchangeable.
+
+1. Establish the absolute `assistantRoot` (if importing) and `marketplaceRoot`.
+   Check the destination's catalog, `package.json`, and `package-lock.json`
+   using paths under `marketplaceRoot`. Stop if it is not the marketplace root.
+2. Address every destination Git command as `git -C "<marketplace-root>" ...`.
+   Inspect status, origin, and branch there, not in the assistant checkout.
+   Finish any approved fast-forward/branch preparation before recording the base.
+3. **Before the first marketplace edit**, run
+   `git -C "<marketplace-root>" rev-parse HEAD`, check its exit code, and record
+   the full output as `marketplaceBase`. Keep this SHA through the handoff.
+   An assistant/source-skill commit is not the marketplace base.
+4. Use absolute destination paths for file reads and edits. Each tool call may
+   start back in the assistant directory: repeat the absolute marketplace path
+   in every command rather than relying on a previous `cd` or shell variable.
+
 ### Explicit destination exception
 
 Use a different destination only when all three conditions hold:
 
 1. The user explicitly names the destination as `owner/repo` in their request.
-2. This checkout's `origin` points to that exact repository. Inspect its host
+2. The marketplace checkout's `origin`, read with
+   `git -C "<marketplace-root>" remote get-url origin`, points to that exact
+   repository. Inspect its host
    and owner/repository for HTTPS or SSH remotes; ignore only an optional `.git`
    suffix. An origin alone is not authorization.
-3. This checkout's `.github/plugin/marketplace.json` has
+3. `<marketplace-root>/.github/plugin/marketplace.json` has
    `"name": "copilot-marketplace"`.
 
 If any condition fails, stop and report the mismatch before editing or writing
@@ -41,7 +62,7 @@ the output and carry the approved target and three checks into the
 1. Choose a unique English kebab-case name, at most 64 characters. Check every
    skill directory in both plugins. Reserve `assistant-setup`, `assistant-learn`,
    `assistant-skill`, and `assistant-share` for the assistant template.
-2. Create `plugins/marketplace-maintenance/skills/<skill>/SKILL.md`.
+2. Create `<marketplace-root>/plugins/marketplace-maintenance/skills/<skill>/SKILL.md`.
    If importing, copy the required supporting files with their relative paths.
    Inspect them for credentials, personal identifiers, organization-specific
    data, absolute machine paths, and permission to redistribute. Preserve any
@@ -77,16 +98,43 @@ the output and carry the approved target and three checks into the
 ## Prepare the contribution
 
 1. Bump `marketplace-maintenance`'s minor version for the new capability in
-   `.github/plugin/plugin.json` and the matching catalog entry. Use the same
-   value in both. If the handoff already includes the correct bump, keep it.
-2. Run `npm ci`, `npm test`, and `npm run validate` from the marketplace root.
-   Fix every failure before opening a PR.
+   `plugins/marketplace-maintenance/.github/plugin/plugin.json` and the matching
+   catalog entry, both under `marketplaceRoot`. Use the same value in both.
+   If the handoff already includes the correct bump, keep it.
+2. Run this PowerShell block with the absolute destination and the pre-edit
+   marketplace SHA substituted. `npm --prefix` runs each script with the
+   marketplace as its working directory, even from the assistant checkout:
+
+   ```powershell
+   $marketplaceRoot = '<absolute-marketplace-root>'
+   $marketplaceBase = '<recorded-marketplace-base-sha>'
+   git -C $marketplaceRoot cat-file -e "$marketplaceBase^{commit}"
+   if ($LASTEXITCODE -ne 0) { throw 'Base is not a marketplace commit; stop.' }
+   git -C $marketplaceRoot merge-base --is-ancestor $marketplaceBase HEAD
+   if ($LASTEXITCODE -ne 0) { throw 'Base is not in this marketplace history; stop.' }
+   npm --prefix $marketplaceRoot ci
+   if ($LASTEXITCODE -ne 0) { throw 'Marketplace npm ci failed; stop.' }
+   npm --prefix $marketplaceRoot test
+   if ($LASTEXITCODE -ne 0) { throw 'Marketplace tests failed; stop.' }
+   npm --prefix $marketplaceRoot run validate
+   if ($LASTEXITCODE -ne 0) { throw 'Marketplace validation failed; stop.' }
+   npm --prefix $marketplaceRoot run validate -- --base $marketplaceBase
+   if ($LASTEXITCODE -ne 0) { throw 'Marketplace base validation failed; stop.' }
+   ```
+
+   Wait for each command to finish and inspect its exit code. On failure,
+   report the exact command, marketplace path, exit code and error; preserve
+   the changes and stop. Do not continue to later checks or publication, run
+   `npm install` as a substitute, or create a lockfile in the assistant clone.
 3. With the user's permission, optionally test the candidate plugin in an
    isolated CLI session with
-   `copilot --plugin-dir ./plugins/marketplace-maintenance`, inspect `/skills`,
+   `copilot --plugin-dir "<marketplace-root>/plugins/marketplace-maintenance"`, inspect `/skills`,
    and invoke it with a representative prompt. Record skipped live checks.
-4. Hand off to `marketplace-submit-update` with the checkout, branch, source
-   attribution, changed skill, version bump, and validation results.
+4. Hand off to `marketplace-submit-update` with the absolute assistant/source
+   and marketplace paths, destination origin, marketplace branch and pre-edit
+   `marketplaceBase`, source attribution, changed skill, version bump, and the
+   exact validation commands with exit codes. Keep any source commit separately
+   named; do not label it as the marketplace base.
 
 Done when the skill and all required supporting files pass validation and the
 contribution handoff is complete. A local skill is not yet a published update.
