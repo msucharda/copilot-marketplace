@@ -1,10 +1,16 @@
 {
   "name": "marketplace-maintenance",
   "description": "Install this marketplace, create and share a skill, and submit a validated contribution PR.",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "author": {
     "name": "agel-data-and-ai-temp-poc"
   },
   "repository": "https://github.com/agel-data-and-ai-temp-poc/copilot-marketplace",
-  "keywords": ["marketplace", "skills", "plugins", "copilot", "workshop"]
+  "keywords": [
+    "marketplace",
+    "skills",
+    "plugins",
+    "copilot",
+    "workshop"
+  ]
 }
