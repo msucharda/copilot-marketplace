@@ -73,6 +73,7 @@ try {
   writeFileSync(join(staging, ".github", "plugin", "plugin.json"), metadata);
   writeFileSync(join(staging, "PROVENANCE.md"), provenance(commit, records));
   const backupDirectory = mkdtempSync(join(dirname(plugin), ".matt-pocock-backup-"));
+  temporary.push(backupDirectory);
   const backup = join(backupDirectory, "plugin");
   renameSync(plugin, backup);
   try {
@@ -81,12 +82,11 @@ try {
     try {
       renameSync(backup, plugin);
     } catch (restoreError) {
+      temporary.splice(temporary.indexOf(backupDirectory), 1);
       throw new Error(`Replacement and rollback failed. Recover the original plugin from ${backup}. ${restoreError.message}`, { cause: error });
     }
-    temporary.push(backupDirectory);
     throw error;
   }
-  temporary.push(backupDirectory);
   console.log(`Vendored ${skills.size} skills, ${records.length} upstream files at ${commit}.`);
 } catch (error) {
   console.error(`Vendoring failed: ${error.message}`);

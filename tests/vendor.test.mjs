@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -92,4 +92,28 @@ test("an upstream manifest missing a workshop skill fails before replacing files
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Required workshop skill is missing upstream/);
   assert.equal(readFileSync(path.join(target, "plugins/matt-pocock-skills/sentinel.txt"), "utf8"), "Keep this existing file.\n");
+});
+
+test("an initial rename failure preserves the plugin and removes temporary directories", (t) => {
+  const { source, target, commit } = fixture(t);
+  const plugin = path.join(target, "plugins", "matt-pocock-skills");
+  const before = readFileSync(path.join(plugin, ".github", "plugin", "plugin.json"));
+  const failRename = `
+    import fs from "node:fs";
+    import { syncBuiltinESMExports } from "node:module";
+    const rename = fs.renameSync;
+    fs.renameSync = (from, to) => {
+      if (from === ${JSON.stringify(plugin)}) throw new Error("Simulated initial rename failure");
+      return rename(from, to);
+    };
+    syncBuiltinESMExports();
+  `;
+  const result = spawnSync(process.execPath, [
+    "--import", `data:text/javascript,${encodeURIComponent(failRename)}`,
+    script, "--commit", commit, "--source", source,
+  ], { cwd: target, encoding: "utf8" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Simulated initial rename failure/);
+  assert.deepEqual(readFileSync(path.join(plugin, ".github", "plugin", "plugin.json")), before);
+  assert.deepEqual(readdirSync(path.join(target, "plugins")), ["matt-pocock-skills"]);
 });

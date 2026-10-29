@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
-import { execFileSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -41,10 +40,38 @@ const vendor = "plugins/matt-pocock-skills";
 const maintenance = "plugins/marketplace-maintenance";
 const skill = `${maintenance}/skills/marketplace-install/SKILL.md`;
 
+function setMaintenanceVersion(directory, version) {
+  editJson(directory, catalog, (value) => {
+    value.plugins.find((entry) => entry.name === "marketplace-maintenance").version = version;
+  });
+  editJson(directory, `${maintenance}/.github/plugin/plugin.json`, (value) => { value.version = version; });
+}
+
 test("the complete marketplace validates offline", (t) => {
   const result = validate(fixture(t));
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /OK: 2 plugins, 30 skills/);
+  assert.match(result.stdout, /OK: 2 plugins, \d+ skills/);
+});
+
+test("the test suite accepts a valid participant contribution and version bump", (t) => {
+  const directory = fixture(t);
+  let name = "participant-example";
+  while (existsSync(path.join(directory, maintenance, "skills", name))) name += "-new";
+  put(directory, `${maintenance}/skills/${name}/SKILL.md`,
+    `---\nname: ${name}\ndescription: "A contributed skill."\n---\nPerform the task.\n`);
+  setMaintenanceVersion(directory, "4.5.6");
+  symlinkSync(path.join(root, "node_modules"), path.join(directory, "node_modules"),
+    process.platform === "win32" ? "junction" : "dir");
+  const environment = { ...process.env };
+  // Start an independent CLI suite rather than inherit the parent test runner.
+  delete environment.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, [
+    "--test", "--test-reporter=spec", "--test-name-pattern", "the complete marketplace|plugin changes require",
+    path.join(directory, "tests", "validate.test.mjs"),
+  ], { cwd: directory, encoding: "utf8", env: environment });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /the complete marketplace validates offline/);
+  assert.match(result.stdout, /plugin changes require a strictly higher SemVer than the base/);
 });
 
 test("the maintenance handoff skills cannot be removed", (t) => {
@@ -56,6 +83,12 @@ test("the maintenance handoff skills cannot be removed", (t) => {
 });
 
 const invalidChanges = [
+  ["an incorrect marketplace name", (directory) => editJson(directory, catalog, (value) => {
+    value.name = "unexpected-marketplace";
+  }), /name must be copilot-marketplace/],
+  ["an incorrect marketplace owner", (directory) => editJson(directory, catalog, (value) => {
+    value.owner.name = "another-owner";
+  }), /incorrect marketplace owner/],
   ["an extra catalog plugin", (directory) => editJson(directory, catalog, (value) => {
     value.plugins.push({ name: "unexpected", source: "./plugins/unexpected", version: "1.0.0", description: "Extra." });
   }), /exactly the two workshop plugins/],
@@ -147,6 +180,7 @@ test("valid folded YAML descriptions are accepted", (t) => {
 
 test("plugin changes require a strictly higher SemVer than the base", (t) => {
   const directory = fixture(t);
+  setMaintenanceVersion(directory, "1.2.3");
   const git = (...args) => execFileSync("git", ["-C", directory, ...args], { encoding: "utf8" }).trim();
   git("init", "--quiet");
   git("config", "user.name", "Fixture");
@@ -159,12 +193,10 @@ test("plugin changes require a strictly higher SemVer than the base", (t) => {
   const unchanged = validate(directory, "--base", base);
   assert.notEqual(unchanged.status, 0);
   assert.match(unchanged.stderr, /version did not increase/);
-  editJson(directory, catalog, (value) => { value.plugins[0].version = "0.4.0-beta.1"; });
-  editJson(directory, `${maintenance}/.github/plugin/plugin.json`, (value) => { value.version = "0.4.0-beta.1"; });
+  setMaintenanceVersion(directory, "1.3.0-beta.1");
   const increased = validate(directory, "--base", base);
   assert.equal(increased.status, 0, increased.stderr);
-  editJson(directory, catalog, (value) => { value.plugins[0].version = "0.3.0+build"; });
-  editJson(directory, `${maintenance}/.github/plugin/plugin.json`, (value) => { value.version = "0.3.0+build"; });
+  setMaintenanceVersion(directory, "1.2.3+build");
   const buildOnly = validate(directory, "--base", base);
   assert.notEqual(buildOnly.status, 0);
   assert.match(buildOnly.stderr, /version did not increase/);
