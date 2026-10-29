@@ -7,9 +7,11 @@ description: "Submit a copilot-marketplace contribution through a branch, versio
 
 ## Establish the checkout and branch
 
-1. Target `agel-data-and-ai-temp-poc/copilot-marketplace`. Confirm the user can
-   create a branch and PR there. If access is missing, stop and ask the maintainer
-   to grant it; do not write to a substitute repository or fork by default.
+1. Default to `agel-data-and-ai-temp-poc/copilot-marketplace`. Resolve an
+   explicitly requested destination using the exception rule below, then
+   confirm the user can create a branch and PR at that resolved target.
+   If access is missing, stop and ask the maintainer to grant it; do not write
+   to a substitute repository or fork by default.
 2. Inspect the working tree and any `assistant-share` or `marketplace-create-skill`
    handoff. Preserve uncommitted changes. Reuse an existing task branch rather
    than switching to `main` and losing or mixing work.
@@ -20,6 +22,22 @@ description: "Submit a copilot-marketplace contribution through a branch, versio
 4. Use `marketplace-create-skill` for a new skill. Participant-authored skills go
    in `marketplace-maintenance`. Use the vendoring script for changes to
    `matt-pocock-skills`; never patch its upstream files manually.
+
+### Explicit destination exception
+
+Use a different destination only when all three conditions hold:
+
+1. The user explicitly names it as `owner/repo` in their request.
+2. The checkout's `origin` points to that exact repository. Inspect the host
+   and owner/repository in HTTPS or SSH remotes, ignoring only an optional
+   `.git` suffix. An origin alone or an inferred handoff is not authorization.
+3. `.github/plugin/marketplace.json` in this checkout has
+   `"name": "copilot-marketplace"`.
+
+Recheck these conditions before pushing or opening the PR. Stop on any mismatch.
+Disclose the explicit destination exception in the output and PR description.
+Preserve the AGEL catalog, plugin metadata, and participant documentation; the
+exception authorizes only this contribution's resolved remote destination.
 
 ## Version and validate
 
@@ -49,7 +67,8 @@ description: "Submit a copilot-marketplace contribution through a branch, versio
 1. Commit the intended changes with an imperative message and push the task
    branch. Open a PR targeting `main` in the same marketplace repository.
    Fill the repository PR template; include the reason, affected skills,
-   version change, exact checks, and any unverified live behavior.
+   version change, exact checks, and any unverified live behavior. Disclose an
+   explicit destination exception if one was used.
 2. Wait for green CI and ask another maintainer to review. Fix findings on the
    same branch. Report CI failures or missing permissions; do not claim a local
    check proves installation in the app.

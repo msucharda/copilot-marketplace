@@ -28,6 +28,10 @@ upstream `mattpocock/skills` plugin (`mattpocock-skills@mattpocock`): the two
 copies expose duplicate skill names.** Existing personal/global copies can also
 collide; inspect them with the maintainer instead of deleting customizations.
 
+Run `copilot plugin marketplace list` first. If `copilot-marketplace` is already
+registered, keep its existing source and skip the repository-access check and
+`marketplace add` below. Browse the registered catalog and install the plugins.
+
 ```shell
 gh repo view agel-data-and-ai-temp-poc/copilot-marketplace
 copilot plugin marketplace add agel-data-and-ai-temp-poc/copilot-marketplace

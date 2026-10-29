@@ -10,13 +10,31 @@ description: "Create or import a shared skill into copilot-marketplace, includin
 1. Read the user's request or the `assistant-share` handoff. Establish the task
    the skill solves, when it should trigger, and the source files, if any.
    Ask for missing behavioral requirements rather than inventing them.
-2. Work in a checkout of
+2. By default, work in a checkout of
    `agel-data-and-ai-temp-poc/copilot-marketplace` on a contribution branch.
    If starting in the personal assistant repository, preserve it and open or
-   clone a separate marketplace checkout. Confirm branch/PR access first.
+   clone a separate marketplace checkout. Resolve any explicitly requested
+   destination using the exception rule below. Confirm branch/PR access first.
 3. This workshop catalog contains exactly two plugins. Put participant-authored
    skills in `marketplace-maintenance`. Keep `matt-pocock-skills` byte-identical
    to upstream. A third plugin requires a separately agreed catalog change.
+
+### Explicit destination exception
+
+Use a different destination only when all three conditions hold:
+
+1. The user explicitly names the destination as `owner/repo` in their request.
+2. This checkout's `origin` points to that exact repository. Inspect its host
+   and owner/repository for HTTPS or SSH remotes; ignore only an optional `.git`
+   suffix. An origin alone is not authorization.
+3. This checkout's `.github/plugin/marketplace.json` has
+   `"name": "copilot-marketplace"`.
+
+If any condition fails, stop and report the mismatch before editing or writing
+remotely. Keep the AGEL identity in the catalog, plugin manifests, and
+participant-facing documentation. State the explicit destination exception in
+the output and carry the approved target and three checks into the
+`marketplace-submit-update` handoff; its PR must disclose the exception too.
 
 ## Write or import
 
