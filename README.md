@@ -14,7 +14,10 @@ It contains exactly two GitHub Copilot plugins:
 | `matt-pocock-skills` | All 27 skills selected by Matt Pocock's pinned upstream plugin, including their supporting files. |
 
 The maintenance skills are `marketplace-install`, `marketplace-create-skill`,
-and `marketplace-submit-update`. The workshop uses `setup-matt-pocock-skills`,
+`marketplace-submit-update`, and `workshop-e2e-checklist`. Use
+`workshop-e2e-checklist` to turn a short technical change description into three
+checks: expected behavior, one failure case, and observable completion, using
+only non-sensitive examples. The workshop uses `setup-matt-pocock-skills`,
 `grill-with-docs`, `to-spec`, and `to-tickets` from the Matt Pocock plugin.
 
 ## Install
@@ -48,7 +51,7 @@ terminal commands on that machine and restart the app or open a fresh session.
 The exact app UI and installation behavior still require the maintainer's live
 check; these instructions do not claim a completed app test.
 
-In a fresh session, confirm the seven workshop skill names listed above are
+In a fresh session, confirm the eight workshop skill names listed above are
 available. In CLI, inspect `/skills`; the interactive `/plugin` menu also manages
 plugins. For authentication failures or a 404, ask the maintainer to resolve
 organization access. Do not substitute another marketplace.
