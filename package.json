@@ -1,0 +1,16 @@
+{
+  "name": "copilot-marketplace",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "test": "node --test",
+    "vendor:matt": "node scripts/vendor-matt-pocock-skills.mjs"
+  },
+  "devDependencies": {
+    "yaml": "^2.8.1"
+  }
+}

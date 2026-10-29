@@ -1,0 +1,28 @@
+{
+  "name": "copilot-marketplace",
+  "owner": {
+    "name": "agel-data-and-ai-temp-poc"
+  },
+  "metadata": {
+    "description": "GitHub Copilot plugins for the AGEL coding-assistant workshop.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "marketplace-maintenance",
+      "source": "./plugins/marketplace-maintenance",
+      "description": "Install this marketplace, create and share a skill, and submit a validated contribution PR.",
+      "version": "0.3.0",
+      "category": "maintenance",
+      "keywords": ["marketplace", "skills", "plugins", "copilot", "workshop"]
+    },
+    {
+      "name": "matt-pocock-skills",
+      "source": "./plugins/matt-pocock-skills",
+      "description": "Matt Pocock's engineering and productivity skills, vendored at a reviewed upstream commit.",
+      "version": "0.1.0",
+      "category": "development",
+      "keywords": ["engineering", "skills", "tdd", "spec", "tickets", "review"]
+    }
+  ]
+}

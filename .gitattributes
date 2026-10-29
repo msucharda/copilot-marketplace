@@ -1,0 +1,6 @@
+* text=auto eol=lf
+
+# Preserve upstream blob bytes on Windows as well as Linux.
+plugins/matt-pocock-skills/** -text
+plugins/matt-pocock-skills/.github/plugin/plugin.json text eol=lf
+plugins/matt-pocock-skills/PROVENANCE.md text eol=lf
