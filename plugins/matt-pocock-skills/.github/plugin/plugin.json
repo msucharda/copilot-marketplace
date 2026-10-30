@@ -1,0 +1,13 @@
+{
+  "name": "matt-pocock-skills",
+  "description": "Matt Pocock's engineering and productivity skills, vendored at a reviewed upstream commit.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Matt Pocock",
+    "url": "https://www.aihero.dev"
+  },
+  "repository": "https://github.com/agel-data-and-ai-temp-poc/copilot-marketplace",
+  "homepage": "https://github.com/mattpocock/skills",
+  "license": "MIT",
+  "keywords": ["engineering", "skills", "tdd", "spec", "tickets", "review"]
+}
