@@ -53,6 +53,35 @@ test("the complete marketplace validates offline", (t) => {
   assert.match(result.stdout, /OK: 2 plugins, \d+ skills/);
 });
 
+test("the public workshop marketplace identity validates offline", (t) => {
+  const directory = fixture(t);
+  editJson(directory, catalog, (value) => { value.owner.name = "msucharda"; });
+  for (const plugin of [maintenance, vendor]) {
+    editJson(directory, `${plugin}/.github/plugin/plugin.json`, (value) => {
+      value.repository = "https://github.com/msucharda/copilot-marketplace";
+      if (plugin === maintenance) value.author.name = "msucharda";
+    });
+  }
+  const result = validate(directory);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test("published metadata identifies the public workshop maintainer", () => {
+  const marketplace = JSON.parse(readFileSync(path.join(root, catalog), "utf8"));
+  const manifest = JSON.parse(readFileSync(path.join(root, maintenance, ".github/plugin/plugin.json"), "utf8"));
+  assert.equal(marketplace.owner.name, "msucharda");
+  assert.equal(manifest.author.name, "msucharda");
+});
+
+test("installation guidance preserves local catalogs but stops for remote-source migration", () => {
+  for (const file of ["README.md", skill]) {
+    const text = readFileSync(path.join(root, file), "utf8");
+    assert.match(text, /Preserve existing local catalogs/);
+    assert.match(text, /remote source[^.]*`msucharda\/copilot-marketplace`/);
+    assert.match(text, /stop and ask the maintainer for migration/);
+  }
+});
+
 test("the test suite accepts a valid participant contribution and version bump", (t) => {
   const directory = fixture(t);
   let name = "participant-example";
@@ -89,6 +118,9 @@ const invalidChanges = [
   ["an incorrect marketplace owner", (directory) => editJson(directory, catalog, (value) => {
     value.owner.name = "another-owner";
   }), /incorrect marketplace owner/],
+  ["an incorrect plugin repository", (directory) => editJson(directory, `${maintenance}/.github/plugin/plugin.json`, (value) => {
+    value.repository = "https://github.com/example/wrong";
+  }), /incorrect plugin repository/],
   ["an extra catalog plugin", (directory) => editJson(directory, catalog, (value) => {
     value.plugins.push({ name: "unexpected", source: "./plugins/unexpected", version: "1.0.0", description: "Extra." });
   }), /exactly the two workshop plugins/],
@@ -113,7 +145,7 @@ const invalidChanges = [
   ["a retired marketplace reference in a supporting file", (directory) =>
     put(directory, "notes.txt", ["ai", "dev", "marketplace"].join("-")), /retired marketplace/],
   ["a development-copy reference in a hidden file", (directory) =>
-    put(directory, ".hidden", `${["msu", "charda"].join("")}/${["copilot", "marketplace"].join("-")}`), /development-copy reference/],
+    put(directory, ".hidden", `${["agel", "data", "and", "ai", "temp", "poc"].join("-")}/${["copilot", "marketplace"].join("-")}`), /development-copy reference/],
   ["changed vendor bytes", (directory) => put(directory, `${vendor}/skills/to-spec/SKILL.md`, "Changed.\n"), /SHA-256 mismatch/],
   ["changed license bytes", (directory) => put(directory, `${vendor}/LICENSE`, "Changed.\n"), /SHA-256 mismatch/],
   ["a missing support file", (directory) =>

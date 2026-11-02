@@ -8,7 +8,7 @@ import test from "node:test";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const skills = ["marketplace-create-skill", "marketplace-submit-update"];
-const defaultRepository = "agel-data-and-ai-temp-poc/copilot-marketplace";
+const defaultRepository = "msucharda/copilot-marketplace";
 const powershell = process.platform === "win32"
   ? path.join(process.env.SystemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
   : "pwsh";
@@ -122,6 +122,12 @@ const cases = [
 ];
 
 for (const skill of skills) {
+  test(`${skill} defaults to the public workshop marketplace`, () => {
+    const text = readFileSync(path.join(root,
+      "plugins", "marketplace-maintenance", "skills", skill, "SKILL.md"), "utf8");
+    assert.ok(text.includes(`Use \`${defaultRepository}\` unless all three exception`));
+  });
+
   for (const repository of [defaultRepository, "example/approved"]) {
     const target = repository === defaultRepository ? "default" : "explicit exception";
     for (const [name, configure, allowed] of cases) {

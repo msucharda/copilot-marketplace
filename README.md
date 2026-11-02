@@ -4,8 +4,8 @@ The shared coding-assistant skills for the AGEL GitHub Copilot workshop on
 2 November 2026. Participants install this marketplace, keep their personal
 assistant repository, and contribute reusable skills through a reviewed PR.
 
-The workshop repository is
-[`agel-data-and-ai-temp-poc/copilot-marketplace`](https://github.com/agel-data-and-ai-temp-poc/copilot-marketplace).
+The workshop repository is publicly hosted at
+[`msucharda/copilot-marketplace`](https://github.com/msucharda/copilot-marketplace).
 It contains exactly two GitHub Copilot plugins:
 
 | Plugin | Purpose |
@@ -28,13 +28,17 @@ upstream `mattpocock/skills` plugin (`mattpocock-skills@mattpocock`): the two
 copies expose duplicate skill names.** Existing personal/global copies can also
 collide; inspect them with the maintainer instead of deleting customizations.
 
-Run `copilot plugin marketplace list` first. If `copilot-marketplace` is already
-registered, keep its existing source and skip the repository-access check and
-`marketplace add` below. Browse the registered catalog and install the plugins.
+Run `copilot plugin marketplace list` first and inspect the registered source.
+Preserve existing local catalogs; they do not need remote repository access.
+Keep an existing remote source only if it identifies `msucharda/copilot-marketplace`.
+For another remote or an unrecognized source, stop and ask the maintainer for migration
+before installation or updates. Do not automatically replace the registration.
+For a preserved local catalog or verified public source, skip the repository-access
+check and `marketplace add` below. Browse that catalog and install the plugins.
 
 ```shell
-gh repo view agel-data-and-ai-temp-poc/copilot-marketplace
-copilot plugin marketplace add agel-data-and-ai-temp-poc/copilot-marketplace
+gh repo view msucharda/copilot-marketplace
+copilot plugin marketplace add msucharda/copilot-marketplace
 copilot plugin marketplace browse copilot-marketplace
 copilot plugin install marketplace-maintenance@copilot-marketplace
 copilot plugin install matt-pocock-skills@copilot-marketplace
@@ -42,7 +46,7 @@ copilot plugin list
 ```
 
 In the desktop app, inspect **Customize** for marketplace/plugin controls.
-Where available, add `agel-data-and-ai-temp-poc/copilot-marketplace` and install
+Where available, add `msucharda/copilot-marketplace` and install
 the two plugins above. If the build does not expose those controls, use the
 terminal commands on that machine and restart the app or open a fresh session.
 The exact app UI and installation behavior still require the maintainer's live
@@ -51,11 +55,12 @@ check; these instructions do not claim a completed app test.
 In a fresh session, confirm the seven workshop skill names listed above are
 available. In CLI, inspect `/skills`; the interactive `/plugin` menu also manages
 plugins. For authentication failures or a 404, ask the maintainer to resolve
-organization access. Do not substitute another marketplace.
+access to the public repository. Do not substitute another marketplace.
 
 ## Update after a contribution
 
-Once the maintainer merges the PR:
+Once the maintainer merges the PR, verify the registered source as described under
+**Install** before updating:
 
 ```shell
 copilot plugin marketplace update copilot-marketplace
@@ -122,7 +127,7 @@ unannounced substitute.
    It checks `git -C "<marketplace-root>" remote get-url --all origin` and
    `git -C "<marketplace-root>" remote get-url --push --all origin`, including
    Git URL rewrites. Every URL must identify
-   `agel-data-and-ai-temp-poc/copilot-marketplace`; an error, empty output or
+   `msucharda/copilot-marketplace`; an error, empty output or
    any other destination stops publication. Push your task branch and open a PR
    against `main` and fill the [PR template](.github/pull_request_template.md).
    Wait for green CI and another maintainer's review. The contribution skills
@@ -189,7 +194,7 @@ snapshot; see [maintenance provenance](plugins/marketplace-maintenance/PROVENANC
 
 These are open acceptance checks, not results from automated validation:
 
-- Add the AGEL repository and install both plugins in the actual workshop app
+- Add the public workshop repository and install both plugins in the actual workshop app
   and participant profile; confirm skill discovery and a representative prompt.
 - Verify participants can create a branch and PR directly in this repository.
 - Complete one real contribution PR, confirm green CI, merge with approval,

@@ -11,7 +11,7 @@ description: "Create or import a shared skill into copilot-marketplace, includin
    the skill solves, when it should trigger, and the source files, if any.
    Ask for missing behavioral requirements rather than inventing them.
 2. By default, work in a checkout of
-   `agel-data-and-ai-temp-poc/copilot-marketplace` on a contribution branch.
+   the public `msucharda/copilot-marketplace` repository on a contribution branch.
    If starting in the personal assistant repository, preserve it and open or
    clone a separate marketplace checkout. Resolve any explicitly requested
    destination using the exception rule below. Run **Verify all destination
@@ -51,14 +51,14 @@ Use a different destination only when all three conditions hold:
    `"name": "copilot-marketplace"`.
 
 If any condition fails, stop and report the mismatch before editing or writing
-remotely. Keep the AGEL identity in the catalog, plugin manifests, and
+remotely. Keep the msucharda identity in the catalog, plugin manifests, and
 participant-facing documentation. State the explicit destination exception in
 the output and carry the approved target and three checks into the
 `marketplace-submit-update` handoff; its PR must disclose the exception too.
 
 ### Verify all destination URLs
 
-For every destination (the AGEL default and any explicit exception), check all
+For every destination (the public workshop default and any explicit exception), check all
 fetch URLs with `git -C "<marketplace-root>" remote get-url --all origin` and all
 effective push URLs with
 `git -C "<marketplace-root>" remote get-url --push --all origin`.
@@ -69,7 +69,7 @@ mismatched URL. Repeat immediately before each push in the same Git configuratio
 context; stop on failure.
 
 Run this block with the absolute checkout path and resolved target substituted.
-Use `agel-data-and-ai-temp-poc/copilot-marketplace` unless all three exception
+Use `msucharda/copilot-marketplace` unless all three exception
 conditions above hold. Keep the same environment and any Git `-c`/`--config-env`
 options for the check and push; after any configuration change, repeat the check.
 Evaluate every returned URL, not only the first or the matching subset:
