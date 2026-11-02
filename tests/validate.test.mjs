@@ -73,6 +73,15 @@ test("published metadata identifies the public workshop maintainer", () => {
   assert.equal(manifest.author.name, "msucharda");
 });
 
+test("installation guidance preserves local catalogs but stops for remote-source migration", () => {
+  for (const file of ["README.md", skill]) {
+    const text = readFileSync(path.join(root, file), "utf8");
+    assert.match(text, /Preserve existing local catalogs/);
+    assert.match(text, /remote source[^.]*`msucharda\/copilot-marketplace`/);
+    assert.match(text, /stop and ask the maintainer for migration/);
+  }
+});
+
 test("the test suite accepts a valid participant contribution and version bump", (t) => {
   const directory = fixture(t);
   let name = "participant-example";

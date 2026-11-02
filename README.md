@@ -28,9 +28,13 @@ upstream `mattpocock/skills` plugin (`mattpocock-skills@mattpocock`): the two
 copies expose duplicate skill names.** Existing personal/global copies can also
 collide; inspect them with the maintainer instead of deleting customizations.
 
-Run `copilot plugin marketplace list` first. If `copilot-marketplace` is already
-registered, keep its existing source and skip the repository-access check and
-`marketplace add` below. Browse the registered catalog and install the plugins.
+Run `copilot plugin marketplace list` first and inspect the registered source.
+Preserve existing local catalogs; they do not need remote repository access.
+Keep an existing remote source only if it identifies `msucharda/copilot-marketplace`.
+For another remote or an unrecognized source, stop and ask the maintainer for migration
+before installation or updates. Do not automatically replace the registration.
+For a preserved local catalog or verified public source, skip the repository-access
+check and `marketplace add` below. Browse that catalog and install the plugins.
 
 ```shell
 gh repo view msucharda/copilot-marketplace
@@ -55,7 +59,8 @@ access to the public repository. Do not substitute another marketplace.
 
 ## Update after a contribution
 
-Once the maintainer merges the PR:
+Once the maintainer merges the PR, verify the registered source as described under
+**Install** before updating:
 
 ```shell
 copilot plugin marketplace update copilot-marketplace
