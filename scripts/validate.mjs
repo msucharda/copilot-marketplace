@@ -129,7 +129,7 @@ function checkSensitive(directory) {
 function checkRepositoryReferences() {
   const forbidden = [
     ["ai", "dev", "marketplace"].join("-"),
-    `${["msu", "charda"].join("")}/${["copilot", "marketplace"].join("-")}`,
+    `${["agel", "data", "and", "ai", "temp", "poc"].join("-")}/${["copilot", "marketplace"].join("-")}`,
   ];
   for (const file of listFiles(root, new Set([".git", "node_modules"]))) {
     const text = readFileSync(file, "utf8").toLowerCase();
@@ -234,7 +234,7 @@ try {
   if (marketplace) {
     checkName(marketplaceFile, "name", marketplace.name);
     if (marketplace.name !== "copilot-marketplace") err(marketplaceFile, "name must be copilot-marketplace");
-    if (marketplace.owner?.name !== "agel-data-and-ai-temp-poc") err(marketplaceFile, "incorrect marketplace owner");
+    if (marketplace.owner?.name !== "msucharda") err(marketplaceFile, "incorrect marketplace owner");
     if (!version(marketplace.metadata?.version)) err(marketplaceFile, "metadata.version must be SemVer");
     checkDescription(marketplaceFile, "metadata.description", marketplace.metadata?.description);
   }
@@ -269,7 +269,7 @@ try {
       if (manifest.name !== entry.name) err(manifestFile, "name differs from the catalog");
       if (!version(manifest.version)) err(manifestFile, "version must be SemVer");
       if (manifest.version !== entry.version) err(manifestFile, "version differs from the catalog");
-      if (manifest.repository !== "https://github.com/agel-data-and-ai-temp-poc/copilot-marketplace") {
+      if (manifest.repository !== "https://github.com/msucharda/copilot-marketplace") {
         err(manifestFile, "incorrect plugin repository");
       }
     }

@@ -14,7 +14,7 @@ description: "Submit a copilot-marketplace contribution through a branch, versio
    Use `git -C "<marketplace-root>" ...` for every destination Git command and
    absolute destination paths for edits. Repeat paths in each tool call;
    a previous `cd` or shell variable may not persist.
-2. Default to `agel-data-and-ai-temp-poc/copilot-marketplace`. Resolve an
+2. Default to the public `msucharda/copilot-marketplace` repository. Resolve an
    explicitly requested destination using the exception rule below. Run
    **Verify all destination URLs** before editing, for the default target too, then
    confirm the user can create a branch and PR at that resolved target.
@@ -51,12 +51,12 @@ Use a different destination only when all three conditions hold:
 
 Recheck these conditions before pushing or opening the PR. Stop on any mismatch.
 Disclose the explicit destination exception in the output and PR description.
-Preserve the AGEL catalog, plugin metadata, and participant documentation; the
+Preserve the msucharda catalog, plugin metadata, and participant documentation; the
 exception authorizes only this contribution's resolved remote destination.
 
 ### Verify all destination URLs
 
-For every destination (the AGEL default and any explicit exception), check all
+For every destination (the public workshop default and any explicit exception), check all
 fetch URLs with `git -C "<marketplace-root>" remote get-url --all origin` and all
 effective push URLs with
 `git -C "<marketplace-root>" remote get-url --push --all origin`.
@@ -67,7 +67,7 @@ mismatched URL. Repeat immediately before each push in the same Git configuratio
 context; stop on failure.
 
 Run this block with the absolute checkout path and resolved target substituted.
-Use `agel-data-and-ai-temp-poc/copilot-marketplace` unless all three exception
+Use `msucharda/copilot-marketplace` unless all three exception
 conditions above hold. Keep the same environment and any Git `-c`/`--config-env`
 options for the check and push; after any configuration change, repeat the check.
 Evaluate every returned URL, not only the first or the matching subset:

@@ -11,11 +11,11 @@ description: "Install, update or remove copilot-marketplace plugins in GitHub Co
    or VS Code. The workshop targets the desktop app on Windows.
 2. Run `copilot plugin marketplace list` first. If `copilot-marketplace` is
    already registered, browse that catalog and install from its existing source.
-   A registered local catalog does not need remote AGEL access. Do not replace
+   A registered local catalog does not need remote repository access. Do not replace
    or re-add its source, or block installation on an unrelated remote check.
    Only when the catalog is absent, verify access with
-   `gh repo view agel-data-and-ai-temp-poc/copilot-marketplace` before adding it.
-   A 404 may mean missing organization access; have the maintainer resolve it
+   `gh repo view msucharda/copilot-marketplace` before adding it.
+   This is a public repository. Have the maintainer resolve a 404
    rather than substituting a different marketplace.
 3. Check `copilot plugin list` for an existing upstream `mattpocock-skills`
    installation. Use only this marketplace's `matt-pocock-skills` plugin.
@@ -30,7 +30,7 @@ From a terminal, add the source only if the catalog is not registered, then
 browse it and install the two named plugins. Keep an existing registration:
 
 ```shell
-copilot plugin marketplace add agel-data-and-ai-temp-poc/copilot-marketplace
+copilot plugin marketplace add msucharda/copilot-marketplace
 copilot plugin marketplace browse copilot-marketplace
 copilot plugin install marketplace-maintenance@copilot-marketplace
 copilot plugin install matt-pocock-skills@copilot-marketplace
@@ -50,7 +50,7 @@ commands. For VS Code, configure these user-level settings, then inspect
 ```json
 {
   "chat.plugins.enabled": true,
-  "chat.plugins.marketplaces": ["agel-data-and-ai-temp-poc/copilot-marketplace"]
+  "chat.plugins.marketplaces": ["msucharda/copilot-marketplace"]
 }
 ```
 
